@@ -7,10 +7,10 @@ import com.devtiro.database.mappers.Mapper;
 import com.devtiro.database.services.BookService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class BookController {
@@ -31,5 +31,20 @@ public class BookController {
         BookDto saveBook = bookMapper.mapTo(bookEntity);
 
         return new ResponseEntity<>(saveBook, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/books")
+    public List<BookDto> listBooks() {
+        List<BookEntity> books = bookService.findAll();
+        return books.stream().map(bookMapper::mapTo).toList();
+    }
+
+    @GetMapping("/books/{isbn}")
+    public ResponseEntity<BookDto> getBook(@PathVariable("isbn") String isbn) {
+        Optional<BookEntity> book = bookService.findOne(isbn);
+        return book.map(bookEntity -> {
+            BookDto bookDto = bookMapper.mapTo(bookEntity);
+            return new ResponseEntity<>(bookDto, HttpStatus.OK);
+        }).orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 }

@@ -1,6 +1,9 @@
 package com.devtiro.database.controllers;
 
+import com.devtiro.database.TestDataUtil;
 import com.devtiro.database.domain.entities.AuthorEntity;
+import com.devtiro.database.services.AuthorService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +17,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
+import java.util.List;
+
+import static org.mockito.Mockito.when;
+
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -24,10 +31,13 @@ public class AuthorControllerIntegrationTest {
 
     private ObjectMapper objectMapper;
 
+    private AuthorService authorService;
+
     @Autowired
-    public AuthorControllerIntegrationTest(MockMvc mockMvc) {
+    public AuthorControllerIntegrationTest(MockMvc mockMvc, AuthorService authorService) {
         this.mockMvc = mockMvc;
         this.objectMapper = new ObjectMapper();
+        this.authorService = authorService;
     }
 
     @Test
@@ -43,7 +53,7 @@ public class AuthorControllerIntegrationTest {
     }
 
     @Test
-    public void testThatCreatteAuthorSuccessfullReturnSaveAuthor() throws Exception {
+    public void testThatCreateAuthorSucessfullReturnSaveAuthor() throws Exception {
         AuthorEntity testAuthor = new AuthorEntity();
         testAuthor.setId(null);
         String authorJson = objectMapper.writeValueAsString(testAuthor);
@@ -53,5 +63,27 @@ public class AuthorControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON).content(authorJson))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").isNumber())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.name").value(testAuthor.getName()));
+    }
+
+    @Test
+    public void testThatListAuthorsReturnHttpStatus200() throws Exception {
+        AuthorEntity testAuthor = TestDataUtil.createTestAuthorEntityA();
+        testAuthor.setId(null);
+        authorService.save(testAuthor);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/authors")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].id").isNumber());
+    }
+
+    @Test
+    public void testThatOneAuthorByIdReturnHttpStatus200() throws Exception {
+        AuthorEntity testAuthor = TestDataUtil.createTestAuthorEntityA();
+        testAuthor.setId(null);
+        authorService.save(testAuthor);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/authors/1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").isNumber());
     }
 }
