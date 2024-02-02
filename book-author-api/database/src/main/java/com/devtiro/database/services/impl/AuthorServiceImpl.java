@@ -39,4 +39,19 @@ public class AuthorServiceImpl implements AuthorService {
         Optional<AuthorEntity> authorEntity = authorRepository.findById(id);
         return authorEntity;
     }
+
+    @Override
+    public boolean isExists(Long id) {
+        return authorRepository.existsById(id);
+    }
+
+    @Override
+    public AuthorEntity partialUpdate(Long id, AuthorEntity authorEntity) {
+        authorEntity.setId(id);
+        return authorRepository.findById(id).map(author -> {
+            Optional.ofNullable(authorEntity.getName()).ifPresent(author::setName);
+            Optional.ofNullable(authorEntity.getAge()).ifPresent(author::setAge);
+            return authorRepository.save(author);
+        }).orElseThrow(() -> new RuntimeException("Author does not exist"));
+    }
 }

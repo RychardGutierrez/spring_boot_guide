@@ -2,6 +2,8 @@ package com.devtiro.database.controllers;
 
 import com.devtiro.database.TestDataUtil;
 import com.devtiro.database.domain.dto.BookDto;
+import com.devtiro.database.domain.entities.AuthorEntity;
+import com.devtiro.database.domain.entities.BookEntity;
 import com.devtiro.database.services.BookService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -48,7 +50,7 @@ public class BookControllerIntegrationTest {
 
     @Test
     public void testThatListBooksReturnHttpStatus200() throws Exception {
-        bookService.createBook(
+        bookService.save(
                 TestDataUtil.createTestBookDtoA(null).getIsbn()
                 , TestDataUtil.createTestBookEntityA(null));
 
@@ -58,15 +60,49 @@ public class BookControllerIntegrationTest {
     }
 
     @Test
-    public void testThatGetOneBookByIdreturnHttpStatus200() throws Exception {
+    public void testThatGetOneBookByIdReturnHttpStatus200() throws Exception {
 
         BookDto bookDto = TestDataUtil.createTestBookDtoA(null);
 
-        bookService.createBook(bookDto.getIsbn()
+        bookService.save(bookDto.getIsbn()
                 , TestDataUtil.createTestBookEntityA(null));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/books/" + bookDto.getIsbn()))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.isbn").isString());
+    }
+
+    @Test
+    public void testThatUpdateAllToOneBookByIdReturnHttpStatus200() throws Exception {
+        BookDto bookTest = TestDataUtil.createTestBookDtoA(null);
+        BookEntity bookEntityTest = TestDataUtil.createTestBookEntityA(null);
+        bookService.save(bookEntityTest.getIsbn(), bookEntityTest);
+
+        // Update the author
+        bookTest.setTitle("Update name");
+
+        String bookJson = objectMapper.writeValueAsString(bookTest);
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/books/" + bookTest.getIsbn())
+                        .contentType(MediaType.APPLICATION_JSON).content(bookJson))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.isbn").isString())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value(bookTest.getTitle()));
+    }
+
+    @Test
+    public void testThatPartialUpdateToOneBookByIdReturnHttpStatus200() throws Exception {
+        BookDto bookTest = TestDataUtil.createTestBookDtoA(null);
+        BookEntity bookEntityTest = TestDataUtil.createTestBookEntityA(null);
+        bookService.save(bookEntityTest.getIsbn(), bookEntityTest);
+
+        // Update the author
+        bookTest.setTitle("Update name");
+
+        String bookJson = objectMapper.writeValueAsString(bookTest);
+
+        mockMvc.perform(MockMvcRequestBuilders.patch("/books/" + bookTest.getIsbn())
+                        .contentType(MediaType.APPLICATION_JSON).content(bookJson))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.isbn").isString())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value(bookTest.getTitle()));
     }
 }
