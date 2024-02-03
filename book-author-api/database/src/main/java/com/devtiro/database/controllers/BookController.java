@@ -6,6 +6,8 @@ import com.devtiro.database.domain.entities.BookEntity;
 import com.devtiro.database.mappers.Mapper;
 import com.devtiro.database.mappers.impl.BookMapper;
 import com.devtiro.database.services.BookService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,10 +36,11 @@ public class BookController {
         return new ResponseEntity<>(saveBook, HttpStatus.CREATED);
     }
 
+//    http://localhost:8080/books?size=10&page=0
     @GetMapping("/books")
-    public List<BookDto> listBooks() {
-        List<BookEntity> books = bookService.findAll();
-        return books.stream().map(bookMapper::mapTo).toList();
+    public Page<BookDto> listBooks(Pageable pageable) {
+        Page<BookEntity> books = bookService.findAll(pageable);
+        return books.map(bookMapper::mapTo);
     }
 
     @GetMapping("/books/{isbn}")
@@ -72,5 +75,16 @@ public class BookController {
         BookEntity bookUpdated = bookService.partialUpdate(isbn, book);
 
         return new ResponseEntity<>(bookMapper.mapTo(bookUpdated), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/books/{isbn}")
+    public ResponseEntity deleteBook(@PathVariable("isbn") String isbn) {
+        if (!bookService.isExists(isbn)) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        bookService.delete(isbn);
+
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

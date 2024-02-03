@@ -105,4 +105,15 @@ public class BookControllerIntegrationTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.isbn").isString())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.title").value(bookTest.getTitle()));
     }
+
+    @Test
+    public void testThatRemoveOneBookByIdReturnHttpStatus204() throws Exception {
+        BookEntity bookEntityTest = TestDataUtil.createTestBookEntityA(null);
+        bookService.save(bookEntityTest.getIsbn(), bookEntityTest);
+
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/books/" + bookEntityTest.getIsbn())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isNoContent());
+    }
 }
